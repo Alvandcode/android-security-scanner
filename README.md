@@ -1,2 +1,100 @@
-# android-security-scanner
-اسکنر امنیتی پیشرفته و آنتی‌ویروس heuristic برای اندروید (بدون نیاز به روت)
+
+
+```markdown
+# 🔒 Android Security Scanner & AntiVirus
+
+**اسکنر امنیتی پیشرفته و آنتی‌یشرفته ه istic برای اندروید**  
+**بدون نیاز به روت** — ساخته شده برای Termux
+
+![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Platform](https://img.shields.io/badge/Platform-Android-success.svg)
+
+---
+
+## ✨ ویژگی‌های اصلی
+
+- **اسکن تنظیمات امنیتی پایه** (USB Debugging، نصب از منابع ناشناس، Developer Options و ...)
+- **اسکن فرآیندهای در حال اجرا** و تشخیص ابزارهای مشکوک (Frida, Xposed, Miner و ...)
+- **اسکن قوی فایل‌های APK / APKS / XAPK** با استفاده از **apktool**
+- **آنتی‌ویروس heuristic پیشرفته**:
+  - تشخیص مجوزهای خطرناک (SMS، Contact، Camera، Accessibility، Location و ...)
+  - جستجوی کلمات و رشته‌های مشکوک در فایل‌های APK
+  - تشخیص پکیج‌های مشکوک
+- **امتیازدهی هوشمند ریسک امنیتی** (از ۰ تا ۱۰۰)
+- **گزارش کامل JSON** با جزئیات دقیق
+- **فیکس خودکار** تعدادی از مشکلات رایج
+
+---
+
+## 🛠️ نحوه نصب و اجرا
+
+### ۱. نصب Termux
+- Termux را از **F-Droid** نصب کنید (نسخه Google Play توصیه نمی‌شود).
+
+### ۲. نصب وابستگی‌ها
+
+```bash
+pkg update && pkg upgrade -y
+pkg install python apktool -y
+pip install --upgrade pip
+```
+
+### ۳. اجرای اسکنر
+
+```bash
+# دانلود یا کپی فایل strong_security_av.py
+python strong_security_av.py
+```
+
+اسکریپت به‌صورت خودکار `apktool` را بررسی و در صورت نیاز نصب می‌کند.
+
+---
+
+## 📊 خروجی برنامه
+
+- نمایش زنده امتیاز ریسک
+- لیست تهدیدات شناسایی‌شده
+- پیشنهادات امنیتی عملی
+- ذخیره گزارش کامل در مسیر:
+  ```
+  /sdcard/strong_security_report.json
+  ```
+
+---
+
+## ⚠️ هشدارها و محدودیت‌ها
+
+- این ابزار **heuristic** است و جایگزین آنتی‌ویروس‌های حرفه‌ای (مانند Malwarebytes) نیست.
+- اسکن فایل‌های زیاد ممکن است چند دقیقه طول بکشد.
+- برخی فیکس‌ها فقط تنظیمات را تغییر می‌دهند و حذف اپلیکیشن‌های مخرب باید دستی انجام شود.
+- برای بهترین نتیجه، مجوز دسترسی به حافظه (`termux-setup-storage`) را بدهید.
+
+---
+
+## 📝 مجوز (License)
+
+این پروژه تحت لایسنس **MIT License** منتشر شده است.  
+شما آزاد هستید که استفاده، تغییر و توزیع کنید.
+
+---
+
+## 📬 ارتباط با من
+- **GitHub**: [@alvandcode](https://github.com/alvandcode)
+- **کانال تلگرام*: [@a_c_official](https://t.me/a_c_official)
+
+---
+
+## 🤝 مشارکت
+
+اگر ایده یا بهبود دارید:
+1. Fork کنید
+2. Branch جدید بسازید
+3. تغییرات را Push کنید
+4. Pull Request ارسال کنید
+
+---
+
+**⭐ اگر این پروژه برایتان مفید بود، لطفاً ستاره (Star) بدهید!**
+
+---
