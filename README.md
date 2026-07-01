@@ -6,9 +6,7 @@
 **اسکنر امنیتی پیشرفته و آنتی‌یشرفته ه istic برای اندروید**  
 **بدون نیاز به روت** — ساخته شده برای Termux
 
-![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Platform](https://img.shields.io/badge/Platform-Android-success.svg)
+
 
 ---
 
