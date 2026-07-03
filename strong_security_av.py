@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-اسکنر امنیتی پیشرفته + آنتی‌ویروس قوی اندروید
-اسکن قوی APK با apktool + heuristic پیشرفته
+اسکنر امنیتی پیشرفته + آنتی‌ویروس heuristic برای اندروید
+نسخه بهبودیافته - v1.1
 """
 
 import os
 import subprocess
 import json
 import re
-import zipfile
-from datetime import datetime
+import time
 import sys
+from datetime import datetime
 from pathlib import Path
 
 class StrongAndroidSecurityAV:
@@ -18,23 +18,211 @@ class StrongAndroidSecurityAV:
         self.risk_score = 100
         self.issues = []
         self.malware_detected = []
-        self.fixed = []
         
         self.dangerous_perms = {
             "READ_SMS", "SEND_SMS", "READ_CONTACTS", "WRITE_CONTACTS",
-            "ACCESS_FINE_LOCATION", "CAMERA", "RECORD_AUDIO", "READ_PHONE_STATE",
-            "CALL_PHONE", "BIND_ACCESSIBILITY_SERVICE", "SYSTEM_ALERT_WINDOW",
-            "READ_CALL_LOG", "INSTALL_PACKAGES", "WRITE_SETTINGS", "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+            "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "CAMERA",
+            "RECORD_AUDIO", "READ_PHONE_STATE", "CALL_PHONE",
+            "BIND_ACCESSIBILITY_SERVICE", "SYSTEM_ALERT_WINDOW",
+            "READ_CALL_LOG", "INSTALL_PACKAGES", "WRITE_SETTINGS",
+            "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "READ_SMS", "WRITE_SMS"
         }
 
-    def run_command(self, cmd, timeout=20):
+    def run_command(self, cmd, timeout=25):
+        """اجرای دستورات ترمینال با مدیریت خطا"""
         try:
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
+            result = subprocess.run(cmd, shell=True, capture_output=True, 
+                                  text=True, timeout=timeout)
             return result.stdout.strip(), result.stderr.strip(), result.returncode
-        except:
-            return "", "Timeout/Error", 1
+        except subprocess.TimeoutExpired:
+            return "", "Timeout", 1
+        except Exception as e:
+            return "", str(e), 1
 
     def install_apktool_if_needed(self):
+        """بررسی و نصب apktool"""
+        print("🔧 بررسی ابزارهای لازم...")
+        out, _, _ = self.run_command("command -v apktool")
+        if not out:
+            print("   نصب apktool ...")
+            self.run_command("pkg install apktool -y")
+        print("   ✅ apktool آماده است.")
+
+    def decode_apk_strong(self, apk_path):
+        """اسکن قوی APK با apktool"""
+        temp_dir = f"/sdcard/.temp_scan_{int(time.time())}"
+        try:
+            os.makedirs(temp_dir, exist_ok=True)
+            
+            print(f"   Decoding: {os.path.basename(apk_path)}")
+            cmd = f"apktool d '{apk_path}' -o '{temp_dir}' -f --no-src"
+            self.run_command(cmd, timeout=45)
+            
+            manifest_path = os.path.join(temp_dir, "AndroidManifest.xml")
+            if not os.path.exists(manifest_path):
+                self.cleanup(temp_dir)
+                return None
+
+            with open(manifest_path, "r", encoding="utf-8", errors="ignore") as f:
+                manifest = f.read()
+
+            # استخراج مجوزها
+            perms = re.findall(r'android:permission="([^"]+)"', manifest)
+            dangerous = [p for p in perms if any(d in p for d in self.dangerous_perms)]
+
+            # بررسی کد smali برای الگوهای مشکوک
+            suspicious = 0
+            for root, _, files in os.walk(temp_dir):
+                for file in files:
+                    if file.endswith(".smali"):
+                        try:
+                            with open(os.path.join(root, file), "r", encoding="utf-8", errors="ignore") as f:
+                                content = f.read().lower()
+                                if any(kw in content for kw in [
+                                    "dexclassloader", "runtime.getruntime", "exec", 
+                                    "su ", "root", "keylog", "steal", "phish"
+                                ]):
+                                    suspicious += 1
+                        except:
+                            continue
+
+            if dangerous or suspicious >= 2:
+                risk = min(len(dangerous) * 12 + suspicious * 18, 85)
+                result = {
+                    "file": os.path.basename(apk_path),
+                    "type": "suspicious_apk",
+                    "dangerous_permissions": len(dangerous),
+                    "suspicious_code": suspicious,
+                    "risk_score": risk,
+                    "recommendation": "حذف فوری - فایل مشکوک به بدافزار"
+                }
+                self.malware_detected.append(result)
+                self.risk_score -= risk
+                self.cleanup(temp_dir)
+                return result
+
+            self.cleanup(temp_dir)
+            return None
+
+        except Exception as e:
+            self.cleanup(temp_dir)
+            return None
+
+    def cleanup(self, path):
+        """پاک کردن فایل‌های موقت"""
+        try:
+            self.run_command(f"rm -rf '{path}'")
+        except:
+            pass
+
+    def scan_all_apks_strong(self):
+        """اسکن تمام فایل‌های APK در پوشه‌های مهم"""
+        print("🔍 اسکن قوی فایل‌های APK / APKS / XAPK ...")
+        self.install_apktool_if_needed()
+        
+        search_paths = [
+            "/sdcard/Download",
+            "/sdcard/Downloads",
+            "/storage/emulated/0/Download",
+            "/sdcard"
+        ]
+        
+        for base_path in search_paths:
+            if not os.path.exists(base_path):
+                continue
+            for root, dirs, files in os.walk(base_path):
+                for file in files:
+                    if file.lower().endswith(('.apk', '.apks', '.xapk')):
+                        full_path = os.path.join(root, file)
+                        print(f"   بررسی: {file}")
+                        self.decode_apk_strong(full_path)
+
+    def scan_running_processes(self):
+        """اسکن فرآیندهای مشکوک"""
+        print("🔍 اسکن فرآیندهای در حال اجرا...")
+        out, _, _ = self.run_command("ps -ef")
+        suspicious_keywords = ["frida", "xposed", "magisk", "substrate", "miner", "payload", "termux"]
+        
+        for line in out.splitlines():
+            if any(kw in line.lower() for kw in suspicious_keywords):
+                self.malware_detected.append({
+                    "type": "suspicious_process",
+                    "details": line.strip()
+                })
+                self.risk_score -= 25
+                print(f"      ⚠️ فرآیند مشکوک: {line.strip()[:80]}")
+
+    def basic_system_scan(self):
+        """اسکن تنظیمات خطرناک سیستم"""
+        print("🔍 اسکن تنظیمات امنیتی پایه...")
+        checks = [
+            ("adb_enabled", "global", "USB Debugging", 18),
+            ("install_non_market_apps", "global", "نصب از منابع ناشناس", 22),
+        ]
+        
+        for key, table, title, penalty in checks:
+            out, _, _ = self.run_command(f"settings get {table} {key}")
+            if out.strip() in ["1", "true"]:
+                self.issues.append({
+                    "title": title,
+                    "fix_cmd": f"settings put {table} {key} 0"
+                })
+                self.risk_score -= penalty
+                print(f"      ⚠️ {title} فعال است!")
+
+    def run_full_scan(self):
+        """اجرای کامل اسکن"""
+        print("🚀 شروع اسکن قوی امنیتی اندروید")
+        print("=" * 70)
+        
+        self.basic_system_scan()
+        self.scan_running_processes()
+        self.scan_all_apks_strong()
+        
+        # گزارش نهایی
+        final_score = max(10, min(100, self.risk_score))
+        if final_score >= 85:
+            status = "امن"
+        elif final_score >= 65:
+            status = "هشدار"
+        else:
+            status = "خطرناک"
+
+        report = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "risk_score": final_score,
+            "status": status,
+            "malware_found": len(self.malware_detected),
+            "issues": self.issues,
+            "details": self.malware_detected
+        }
+        
+        report_path = "/sdcard/strong_security_report.json"
+        try:
+            with open(report_path, "w", encoding="utf-8") as f:
+                json.dump(report, f, ensure_ascii=False, indent=2)
+        except:
+            pass
+
+        print("\n" + "=" * 70)
+        print("📊 گزارش نهایی")
+        print("=" * 70)
+        print(f"امتیاز امنیت: {final_score}/100 → {status}")
+        print(f"تهدیدات شناسایی شده: {len(self.malware_detected)}")
+        print(f"گزارش کامل ذخیره شد در: {report_path}")
+        print("=" * 70)
+
+        if self.malware_detected:
+            print("⚠️  فایل‌ها و فرآیندهای مشکوک شناسایی شدند. بررسی و حذف کنید!")
+
+
+if __name__ == "__main__":
+    if not os.path.exists("/sdcard"):
+        print("❌ این اسکریپت فقط در Termux روی اندروید اجرا می‌شود.")
+        sys.exit(1)
+    
+    scanner = StrongAndroidSecurityAV()
+    scanner.run_full_scan()    def install_apktool_if_needed(self):
         """نصب apktool برای اسکن قوی"""
         print("🔧 بررسی و نصب ابزارهای اسکن قوی...")
         out, _, _ = self.run_command("command -v apktool")
