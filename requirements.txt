@@ -1,0 +1,5 @@
+# Advanced Android Security Scanner Requirements
+# نیازمندی‌های اسکنر امنیتی اندروید
+
+# اختیاری: برای progress bar
+tqdm>=4.65.0
