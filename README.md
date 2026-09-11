@@ -1,3 +1,19 @@
+# Android Security Scanner & Antivirus
+
+[![Stars](https://img.shields.io/github/stars/Alvandcode/android-security-scanner?style=flat-square)](https://github.com/Alvandcode/android-security-scanner/stargazers) [![License](https://img.shields.io/github/license/Alvandcode/android-security-scanner?style=flat-square)](./LICENSE) [![Last commit](https://img.shields.io/github/last-commit/Alvandcode/android-security-scanner?style=flat-square)](https://github.com/Alvandcode/android-security-scanner/commits)
+
+> Heuristic Android security scanner & antivirus (no root, Termux-ready) with APK analysis and risk scoring.
+
+<div dir="rtl">
+
+## اسکنر امنیتی و آنتی‌ویروس اندروید
+
+اسکنر امنیتی و آنتی‌ویروس هیوریستیک اندروید بدون نیاز به روت، مخصوص ترموکس؛ همراه با تحلیل فایل APK و امتیازدهی به ریسک امنیتی.
+
+</div>
+
+---
+
 # ðŸ”’ Android Security Scanner & AntiVirus
 
 [![Stars](https://img.shields.io/github/stars/Alvandcode/android-security-scanner?style=flat-square)](https://github.com/Alvandcode/android-security-scanner/stargazers)
@@ -94,3 +110,19 @@ MIT â€” see [LICENSE](./LICENSE).
 ---
 
 â­ If useful: https://github.com/Alvandcode/android-security-scanner
+
+---
+
+## Contributing / مشارکت
+
+- EN: Issues and Pull Requests are welcome. Please see `CONTRIBUTING.md`.
+- FA: برای گزارش مشکل یا پیشنهاد قابلیت جدید، لطفا ایشو یا پول‌ریکوئست ثبت کنید.
+
+## License / لایسنس
+
+MIT — see [LICENSE](./LICENSE).
+
+## Contact / ارتباط
+
+- Telegram: https://t.me/a_c_official
+- Website: https://alvandcode.github.io
